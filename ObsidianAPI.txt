@@ -1,0 +1,1177 @@
+Commands
+
+Commands are actions that the user can perform from the Command Palette or by using a hot key.
+
+command.png
+
+To register a new command for your plugin, call the addCommand() method inside the onload() method:
+
+import { Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.addCommand({
+      id: "print-greeting-to-console",
+      name: "Print greeting to console",
+      callback: () => {
+        console.log("Hey, you!");
+      },
+    });
+  }
+}
+
+Conditional commands
+
+If your command is only able to run under certain conditions, then consider using checkCallback() instead.
+
+The checkCallback runs twice. First, to perform a preliminary check to determine whether the command can run. Second, to perform the action.
+
+Since time may pass between the two runs, you need to perform the check during both calls.
+
+To determine whether the callback should perform a preliminary check or an action, a checking argument is passed to the callback.
+
+    If checking is set to true, perform a preliminary check.
+    If checking is set to false, perform an action.
+
+The command in the following example depends on a required value. In both runs, the callback checks that the value is present but only performs the action if checking is false.
+
+this.addCommand({
+  id: 'example-command',
+  name: 'Example command',
+  // highlight-next-line
+  checkCallback: (checking: boolean) => {
+    const value = getRequiredValue();
+
+    if (value) {
+      if (!checking) {
+        doCommand(value);
+      }
+
+      return true
+    }
+
+    return false;
+  },
+});
+
+Editor commands
+
+If your command needs access to the editor, you can also use the editorCallback(), which provides the active editor and its view as arguments.
+
+this.addCommand({
+  id: 'example-command',
+  name: 'Example command',
+  editorCallback: (editor: Editor, view: MarkdownView) => {
+    const sel = editor.getSelection()
+
+    console.log(`You have selected: ${sel}`);
+  },
+}
+
+Note
+
+Editor commands only appear in the Command Palette when there's an active editor available.
+
+If the editor callback can only run given under certain conditions, consider using the editorCheckCallback() instead. For more information, refer to Conditional commands.
+
+this.addCommand({
+  id: 'example-command',
+  name: 'Example command',
+  editorCheckCallback: (checking: boolean, editor: Editor, view: MarkdownView) => {
+    const value = getRequiredValue();
+
+    if (value) {
+      if (!checking) {
+        doCommand(value);
+      }
+
+      return true
+    }
+
+    return false;
+  },
+});
+
+Hot keys
+
+The user can run commands using a keyboard shortcut, or hot key. While they can configure this themselves, you can also provide a default hot key.
+Warning
+
+Avoid setting default hot keys for plugins that you intend for others to use. Hot keys are highly likely to conflict with those defined by other plugins or by the user themselves.
+
+In this example, the user can run the command by pressing and holding Ctrl (or Cmd on Mac) and Shift together, and then pressing the letter a on their keyboard.
+
+this.addCommand({
+  id: 'example-command',
+  name: 'Example command',
+  hotkeys: [{ modifiers: ["Mod", "Shift"], key: "a" }],
+  callback: () => {
+    console.log('Hey, you!');
+  },
+});
+
+Note
+
+The Mod key is a special modifier key that becomes Ctrl on Windows and Linux, and Cmd on macOS.
+Links to this page
+Communicating with editor extensions
+Editor
+Views
+
+Context menus
+
+If you want to open up a context menu, use Menu:
+
+import { Menu, Notice, Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.addRibbonIcon("dice", "Open menu", (event) => {
+      const menu = new Menu();
+
+      menu.addItem((item) =>
+        item
+          .setTitle("Copy")
+          .setIcon("documents")
+          .onClick(() => {
+            new Notice("Copied");
+          })
+      );
+
+      menu.addItem((item) =>
+        item
+          .setTitle("Paste")
+          .setIcon("paste")
+          .onClick(() => {
+            new Notice("Pasted");
+          })
+      );
+
+      menu.showAtMouseEvent(event);
+    });
+  }
+}
+
+showAtMouseEvent() opens the menu where you clicked with the mouse.
+Tip
+
+If you need more control of where the menu appears, you can use menu.showAtPosition({ x: 20, y: 20 }) to open the menu at a position relative to the top-left corner of the Obsidian window.
+
+For more information on what icons you can use, refer to Icons.
+
+You can also add an item to the file menu, or the editor menu, by subscribing to the file-menu and editor-menu workspace events:
+
+context-menu-positions.png
+
+import { Notice, Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        menu.addItem((item) => {
+          item
+            .setTitle("Print file path 👈")
+            .setIcon("document")
+            .onClick(async () => {
+              new Notice(file.path);
+            });
+        });
+      })
+    );
+
+  this.registerEvent(
+      this.app.workspace.on("editor-menu", (menu, editor, view) => {
+        menu.addItem((item) => {
+          item
+            .setTitle("Print file path 👈")
+            .setIcon("document")
+            .onClick(async () => {
+              new Notice(view.file.path);
+            });
+        });
+      })
+    );
+  }
+}
+
+For more information on handling events, refer to Events.
+
+HTML elements
+
+Several components in the Obsidian API, such as the Settings, expose container elements:
+
+import { App, PluginSettingTab } from "obsidian";
+
+class ExampleSettingTab extends PluginSettingTab {
+  plugin: ExamplePlugin;
+
+  constructor(app: App, plugin: ExamplePlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    // highlight-next-line
+    let { containerEl } = this;
+
+    // ...
+  }
+}
+
+Container elements are HTMLElement objects that make it possible to create custom interfaces within Obsidian.
+Create HTML elements using createEl()
+
+Every HTMLElement, including the container element, exposes a createEl() method that creates an HTMLElement under the original element.
+
+For example, here's how you can add an <h1> heading element inside the container element:
+
+containerEl.createEl("h1", { text: "Heading 1" });
+
+createEl() returns a reference to the new element:
+
+const book = containerEl.createEl("div");
+book.createEl("div", { text: "How to Take Smart Notes" });
+book.createEl("small", { text: "Sönke Ahrens" });
+
+Style your elements
+
+You can add custom CSS styles to your plugin by adding a styles.css file in the plugin root directory. To add some styles for the previous book example:
+
+.book {
+  border: 1px solid var(--background-modifier-border);
+  padding: 10px;
+}
+
+.book__title {
+  font-weight: 600;
+}
+
+.book__author {
+  color: var(--text-muted);
+}
+
+Tip
+
+--background-modifier-border and --text-muted are CSS variables that are defined and used by Obsidian itself. If you use these variables for your styles, your plugin will look great even if the user has a different theme! 🌈
+
+To make the HTML elements use the styles, set the cls property for the HTML element:
+
+const book = containerEl.createEl("div", { cls: "book" });
+book.createEl("div", { text: "How to Take Smart Notes", cls: "book__title" });
+book.createEl("small", { text: "Sönke Ahrens", cls: "book__author" });
+
+Now it looks much better! 🎉
+
+styles.png
+Conditional styles
+
+Use the toggleClass method if you want to change the style of an element based on the user's settings or other values:
+
+element.toggleClass("danger", status === "error");
+
+Links to this page
+Icons
+Markdown post processing
+Modals
+Plugin guidelines
+Settings
+Status bar
+Use React in your plugin
+Use Svelte in your plugin
+Views
+
+Icons
+
+Several of the UI components in the Obsidian API lets you configure an accompanying icon. You can choose from one of the built-in icons, or you can add your own.
+Browse available icons
+
+Browse to lucide.dev to see all available icons and their corresponding names.
+
+Please note: Only icons up to v0.171.0 are supported at this time.
+Use icons
+
+If you'd like to use icons in your custom interfaces, use the setIcon() utility function to add an icon to an HTML element. The following example adds icon to the status bar:
+
+import { Plugin, setIcon } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    const item = this.addStatusBarItem();
+    setIcon(item, "info");
+  }
+}
+
+To change the size of the icon, set the --icon-size CSS variable on the element containing the icon using preset sizes:
+
+div {
+  --icon-size: var(--icon-size-m);
+}
+
+Add your own icon
+
+To add a custom icon for your plugin, use the addIcon() utility:
+
+import { addIcon, Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    addIcon("circle", `<circle cx="50" cy="50" r="50" fill="currentColor" />`);
+
+    this.addRibbonIcon("circle", "Click me", () => {
+      console.log("Hello, you!");
+    });
+  }
+}
+
+addIcon takes two arguments:
+
+    A name to uniquely identify your icon.
+    The SVG content for the icon, without the surrounding <svg> tag.
+
+Note that your icon needs to fit within a 0 0 100 100 view box to be drawn properly.
+
+After the call to addIcon, you can use the icon just like any of the built-in icons.
+Icon design guidelines
+
+For compatibility and cohesiveness with the Obsidian interface, your icons should follow Lucide’s guidelines
+
+    Icons must be designed on a 24 by 24 pixels canvas
+    Icons must have at least 1 pixel padding within the canvas
+    Icons must have a stroke width of 2 pixels
+    Icons must use round joins
+    Icons must use round caps
+    Icons must use centered strokes
+    Shapes (such as rectangles) in icons must have border radius of 2 pixels
+    Distinct elements must have 2 pixels of spacing between each other
+
+Lucide also provides templates and guides for vector editors such as Illustrator, Figma, and Inkscape.
+Links to this page
+Context menus
+Ribbon actions
+
+Modals
+
+Modals display information and accept input from the user. To create a modal, create a class that extends Modal:
+
+import { App, Modal } from "obsidian";
+
+export class ExampleModal extends Modal {
+  constructor(app: App) {
+    super(app);
+  }
+
+  onOpen() {
+    let { contentEl } = this;
+    contentEl.setText("Look at me, I'm a modal! 👀");
+  }
+
+  onClose() {
+    let { contentEl } = this;
+    contentEl.empty();
+  }
+}
+
+    onOpen() is called when the modal is opened and is responsible for building the content of your modal. For more information, refer to HTML elements.
+    onClose() is called when the modal is closed and is responsible for cleaning up any resources used by the modal.
+
+To open a modal, create a new instance of ExampleModal and call open() on it:
+
+import { Plugin } from "obsidian";
+import { ExampleModal } from "./modal";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.addCommand({
+      id: "display-modal",
+      name: "Display modal",
+      callback: () => {
+        new ExampleModal(this.app).open();
+      },
+    });
+  }
+}
+
+Accept user input
+
+The modal in the previous example only displayed some text. Let's look at a little more complex example that handles input from the user.
+
+modal-input.png
+
+import { App, Modal, Setting } from "obsidian";
+
+export class ExampleModal extends Modal {
+  result: string;
+  onSubmit: (result: string) => void;
+
+  constructor(app: App, onSubmit: (result: string) => void) {
+    super(app);
+    this.onSubmit = onSubmit;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+
+    contentEl.createEl("h1", { text: "What's your name?" });
+
+    new Setting(contentEl)
+      .setName("Name")
+      .addText((text) =>
+        text.onChange((value) => {
+          this.result = value
+        }));
+
+    new Setting(contentEl)
+      .addButton((btn) =>
+        btn
+          .setButtonText("Submit")
+          .setCta()
+          .onClick(() => {
+            this.close();
+            this.onSubmit(this.result);
+          }));
+  }
+
+  onClose() {
+    let { contentEl } = this;
+    contentEl.empty();
+  }
+}
+
+The result is stored in this.result and returned in the onSubmit callback when the user clicks Submit:
+
+new ExampleModal(this.app, (result) => {
+  new Notice(`Hello, ${result}!`);
+}).open();
+
+Select from list of suggestions
+
+SuggestModal is a special modal that lets you display a list of suggestions to the user.
+
+suggest-modal.gif
+
+import { App, Notice, SuggestModal } from "obsidian";
+
+interface Book {
+  title: string;
+  author: string;
+}
+
+const ALL_BOOKS = [
+  {
+    title: "How to Take Smart Notes",
+    author: "Sönke Ahrens",
+  },
+  {
+    title: "Thinking, Fast and Slow",
+    author: "Daniel Kahneman",
+  },
+  {
+    title: "Deep Work",
+    author: "Cal Newport",
+  },
+];
+
+export class ExampleModal extends SuggestModal<Book> {
+  // Returns all available suggestions.
+  getSuggestions(query: string): Book[] {
+    return ALL_BOOKS.filter((book) =>
+      book.title.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+
+  // Renders each suggestion item.
+  renderSuggestion(book: Book, el: HTMLElement) {
+    el.createEl("div", { text: book.title });
+    el.createEl("small", { text: book.author });
+  }
+
+  // Perform action on the selected suggestion.
+  onChooseSuggestion(book: Book, evt: MouseEvent | KeyboardEvent) {
+    new Notice(`Selected ${book.title}`);
+  }
+}
+
+In addition to SuggestModal, the Obsidian API provides an even more specialized type of modal for suggestions: the FuzzySuggestModal. While it doesn't give you the same control of how each item is rendered, you get fuzzy string search out-of-the-box.
+
+fuzzy-suggestion-modal.png
+
+export class ExampleModal extends FuzzySuggestModal<Book> {
+  getItems(): Book[] {
+    return ALL_BOOKS;
+  }
+
+  getItemText(book: Book): string {
+    return book.title;
+  }
+
+  onChooseItem(book: Book, evt: MouseEvent | KeyboardEvent) {
+    new Notice(`Selected ${book.title}`);
+  }
+}
+
+Ribbon actions
+
+The sidebar on the left side of the Obsidian interface is mainly known as the ribbon. In addition to system operations, such as opening the preferences or another vault, the ribbon can also host actions defined by plugins.
+
+To add a action to the ribbon, use the addRibbonIcon() method:
+
+import { Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.addRibbonIcon("dice", "Print to console", () => {
+      console.log("Hello, you!");
+    });
+  }
+}
+
+The first argument specifies which icon to use. For more information on the available icons, and how to add your own, refer to Icons.
+Links to this page
+About user interface
+Communicating with editor extensions
+Views
+
+Settings
+
+If you want users to be able to configure parts of your plugin themselves, you can expose them as settings.
+
+In this guide, you'll learn how to create a settings page like this 👇
+
+settings.png
+
+The main reason to add settings to a plugin is to store configuration that persists even after the user quits Obsidian. The following example demonstrates how to save and load settings from disk:
+
+import { Plugin } from "obsidian";
+import { ExampleSettingTab } from "./settings";
+
+interface ExamplePluginSettings {
+  dateFormat: string;
+}
+
+const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
+  dateFormat: "YYYY-MM-DD",
+};
+
+export default class ExamplePlugin extends Plugin {
+  settings: ExamplePluginSettings;
+
+  async onload() {
+    await this.loadSettings();
+
+    this.addSettingTab(new ExampleSettingTab(this.app, this));
+  }
+
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
+}
+
+Nested properties in settings
+
+Object.assign() copies the references to any nested properties (shallow copy). If your settings object contains nested properties, you need to copy each nested property recursively (deep copy). Otherwise, any changes to a nested property will apply do all objects that were copied using Object.assign().
+
+There's a lot going on here 🤯, so let's look closer at each part.
+Create a settings definition
+
+First, you need to create a definition, ExamplePluginSettings, for what settings you want the user to be able to configure. While the plugin is enabled, you can access the settings from the settings member variable.
+
+interface ExamplePluginSettings {
+  dateFormat: string;
+}
+
+export default class ExamplePlugin extends Plugin {
+  settings: ExamplePluginSettings;
+
+  // ...
+}
+
+Save and load the settings object
+
+loadData() and saveData() provide an easy way to store and retrieve data from disk. The example also introduces two helper methods that makes it easier to use loadData() and saveData() from other parts of the plugin.
+
+export default class ExamplePlugin extends Plugin {
+
+  // ...
+
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
+}
+
+Finally, make sure to load the settings when the plugin loads:
+
+async onload() {
+  await this.loadSettings();
+
+  // ...
+}
+
+Provide default values
+
+When the user enables the plugin for the first time, none of the settings have been configured yet. The preceding example provides default values for any missing settings.
+
+To understand how this work, let's look at the following code:
+
+Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+
+Object.assign() is a JavaScript function that copies all properties from one object to another. Any properties that are returned by loadData() override the properties in DEFAULT_SETTINGS.
+
+const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
+  dateFormat: "YYYY-MM-DD",
+};
+
+Tip
+
+Partial<Type> is a TypeScript utility that returns a type with all properties of Type set to optional. It enables type checking while letting you only define the properties you want to provide defaults for.
+Register a settings tab
+
+The plugin can now save and load plugin configuration, but the user doesn't yet have any way of changing any of the settings. By adding a settings tab you can provide an easy-to-use interface for the user to update their plugin settings:
+
+this.addSettingTab(new ExampleSettingTab(this.app, this));
+
+Here, the ExampleSettingTab is a class that extends PluginSettingTab:
+
+import ExamplePlugin from "./main";
+import { App, PluginSettingTab, Setting } from "obsidian";
+
+export class ExampleSettingTab extends PluginSettingTab {
+  plugin: ExamplePlugin;
+
+  constructor(app: App, plugin: ExamplePlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    let { containerEl } = this;
+
+    containerEl.empty();
+
+    new Setting(containerEl)
+      .setName("Date format")
+      .setDesc("Default date format")
+      .addText((text) =>
+        text
+          .setPlaceholder("MMMM dd, yyyy")
+          .setValue(this.plugin.settings.dateFormat)
+          .onChange(async (value) => {
+            this.plugin.settings.dateFormat = value;
+            await this.plugin.saveSettings();
+          })
+      );
+  }
+}
+
+display() is where you build the content for the settings tab. For more information, refer to HTML elements.
+
+new Setting(containerEl) appends a setting to the container element. This example uses a text field using addText(), but there are several other setting types available.
+
+Update the settings object whenever the value of the text field changes, and then save it to disk:
+
+.onChange(async (value) => {
+  this.plugin.settings.dateFormat = value;
+  await this.plugin.saveSettings();
+})
+
+Nice work! 💪 Your users will thank you for giving them a way to customize how they interact with your plugin. Before heading to the next guide, experiment with what you've learned by adding another setting.
+Links to this page
+HTML elements
+
+Status bar
+
+To create a new block in the status bar, call the addStatusBarItem() in the onload() method. The addStatusBarItem() method returns an HTML elements that you can add your own elements to.
+Obsidian mobile
+
+Custom status bar items are not supported on Obsidian mobile apps.
+
+import { Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    const item = this.addStatusBarItem();
+    item.createEl("span", { text: "Hello from the status bar 👋" });
+  }
+}
+
+Note
+
+For more information on how to use the createEl() method, refer to HTML elements.
+
+You can add multiple status bar items by calling addStatusBarItem() multiple times. Since Obsidian adds a gap between them, you need to create multiple HTML element on the same status bar item if you need more control of spacing.
+
+import { Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    const fruits = this.addStatusBarItem();
+    fruits.createEl("span", { text: "🍎" });
+    fruits.createEl("span", { text: "🍌" });
+
+    const veggies = this.addStatusBarItem();
+    veggies.createEl("span", { text: "🥦" });
+    veggies.createEl("span", { text: "🥬" });
+  }
+}
+
+The example above results in the following status bar:
+
+status-bar.png
+Links to this page
+About user interface
+Use React in your plugin
+
+Views
+
+Views determine how Obsidian displays content. The file explorer, graph view, and the Markdown view are all examples of views, but you can also create your own custom views that display content in a way that makes sense for your plugin.
+
+To create a custom view, create a class that extends the ItemView interface:
+
+import { ItemView, WorkspaceLeaf } from "obsidian";
+
+export const VIEW_TYPE_EXAMPLE = "example-view";
+
+export class ExampleView extends ItemView {
+  constructor(leaf: WorkspaceLeaf) {
+    super(leaf);
+  }
+
+  getViewType() {
+    return VIEW_TYPE_EXAMPLE;
+  }
+
+  getDisplayText() {
+    return "Example view";
+  }
+
+  async onOpen() {
+    const container = this.containerEl.children[1];
+    container.empty();
+    container.createEl("h4", { text: "Example view" });
+  }
+
+  async onClose() {
+    // Nothing to clean up.
+  }
+}
+
+Note
+
+For more information on how to use the createEl() method, refer to HTML elements.
+
+Each view is uniquely identified by a text string and several operations require that you specify the view you'd like to use. Extracting it to a constant, VIEW_TYPE_EXAMPLE, is a good idea—as you will see later in this guide.
+
+    getViewType() returns a unique identifier for the view.
+    getDisplayText() returns a human-friendly name for the view.
+    onOpen() is called when the view is opened within a new leaf and is responsible for building the content of your view.
+    onClose() is called when the view should close and is responsible for cleaning up any resources used by the view.
+
+Custom views need to be registered when the plugin is enabled, and cleaned up when the plugin is disabled:
+
+import { Plugin } from "obsidian";
+import { ExampleView, VIEW_TYPE_EXAMPLE } from "./view";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.registerView(
+      VIEW_TYPE_EXAMPLE,
+      (leaf) => new ExampleView(leaf)
+    );
+
+    this.addRibbonIcon("dice", "Activate view", () => {
+      this.activateView();
+    });
+  }
+
+  async onunload() {
+  }
+
+  async activateView() {
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_EXAMPLE);
+
+    await this.app.workspace.getRightLeaf(false).setViewState({
+      type: VIEW_TYPE_EXAMPLE,
+      active: true,
+    });
+
+    this.app.workspace.revealLeaf(
+      this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE)[0]
+    );
+  }
+}
+
+The second argument to registerView() is a factory function that returns an instance of the view you want to register.
+Warning
+
+Never manage references to views in your plugin. Obsidian may call the view factory function multiple times. Avoid side effects in your view, and use getLeavesOfType() whenever you need to access your view instances.
+
+this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE).forEach((leaf) => {
+  if (leaf.view instanceof ExampleView) {
+    // Access your view instance.
+  }
+});
+
+In the onunload() method, to make sure that you clean up the view whenever the plugin is disabled:
+
+    Allow the view clean up after itself by calling close().
+    Detach all leaves that are using the view.
+
+After you've registered a custom view for the plugin, you should to give the user a way to activate it. The activateView() is a convenient method that does three things:
+
+    Detaches all leaves with the custom view.
+    Adds the custom view on the right leaf.
+    Reveals the leaf that contains the custom view.
+
+Tip
+
+The activateView() restricts your plugin to at most one leaf at a time. Try commenting out the call to detachLeavesOfType() to allow the user to create more than one leaf. One for every call to activateView().
+
+How you want the user to activate the custom view is up to you. The example uses a ribbon action, but you can also use a command.
+Links to this page
+About user interface
+Use React in your plugin
+Workspace
+
+Workspace
+
+Obsidian lets you configure what content is visible to you at any given time. Hide the file explorer when you don't need it, display multiple documents side by side, or show an outline of your document while you're working on it. The configuration of visible content within your application window is known as the workspace.
+
+The workspace is implemented as a tree data structure, where each node in the tree is referred to as a workspace item. There are two types of workspace items: parents and leaves. The main difference is that parent items can contain child items, including other parent items, whereas leaf items can't contain any workspace items at all.
+
+There are two types of parent items, splits and tabs, which determine how the children are presented to the user:
+Split
+Leaf
+Leaf
+Leaf
+Tabs
+Leaf
+Leaf
+Leaf
+
+    A split item lays out its child items one after another along a vertical or horizontal direction.
+    A tabs item only displays one child item at a time and hides the others.
+
+The workspace has three special split items under it: left, right, and root. The following diagram shows a example of what a typical workspace could look like:
+Workspace
+Left split
+Root split
+Right split
+Tabs
+Leaf
+Leaf
+Split
+Leaf
+Leaf
+Leaf
+Tabs
+Leaf
+Leaf
+Leaf
+
+A leaf is a window that can display content in different ways. The type of leaf determines how content is displayed, and correspond to a specific view. For example, a leaf of type graph displays the graph view.
+Splits
+
+By default, the direction of the root split is set to vertical. When you create a new leaf to it, Obsidian creates a new column in the user interface. When you split a leaf, the resulting leaves are added to a new split item. While there's no defined limit to the number of levels you can create under the root split, in practice their usefulness diminish for each level.
+Root split
+(before)
+Leaf
+Leaf
+Root split
+(after)
+Split
+Leaf
+Leaf
+Leaf
+
+The left and right splits work a little differently. When you split a leaf in the side docks, Obsidian generates a new tabs item and adds the new leaf under it. Effectively, this means they can only have three levels of workspace items at any time, and any direct children must be tabs items.
+Right split
+(before)
+Tabs
+Leaf
+Leaf
+Right split
+(after)
+Tabs
+Tabs
+Leaf
+Leaf
+Leaf
+Inspect the workspace
+
+You can access the workspace through the App object. The following example prints the type of every leaf in the workspace:
+
+import { Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.addRibbonIcon("dice", "Print leaf types", () => {
+      this.app.workspace.iterateAllLeaves((leaf) => {
+        console.log(leaf.getViewState().type);
+      });
+    });
+  }
+}
+
+Leaf lifecycle
+
+Plugins can add leaves of any type to the workspace, as well as define new leaf types through custom views. Here are a few ways to add a leaf to the workspace. For more ways, refer to Workspace.
+
+    If you want to add a new leaf in the root split, use getLeaf(true).
+    If you want to add a new leaf in any of the side bars, use getLeftLeaf() and getRightLeaf(). Both let you decide whether to add the leaf to a new split.
+
+You can also explicitly add the leaf in the split of your choice, using createLeafInParent().
+
+Unless explicitly removed, any leaves that a plugin add to the workspace remain even after the plugin is disabled. Plugins are responsible for removing any leaves they add to the workspace.
+
+To remove a leaf from the workspace, call detach() on the leaf you want to remove. You can also remove all leaves of a certain type, by using detachLeavesOfType().
+Leaf groups
+
+You can create linked panes by assigning multiple leaves to the same group, using setGroup().
+
+leaves.forEach((leaf) => leaf.setGroup("group1");
+
+Events
+
+Many of the interfaces in the Obsidian lets you subscribe to events throughout the application, for example when the user makes changes to a file.
+
+Any registered event handlers need to be detached whenever the plugin unloads. The safest way to make sure this happens is to use the registerEvent() method.
+
+import { Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.registerEvent(this.app.vault.on('create', () => {
+      console.log('a new file has entered the arena')
+    }));
+  }
+}
+
+Timing events
+
+If you want to repeatedly call a function with a fixed delay, use the window.setInterval() function with the registerInterval() method.
+
+The following example displays the current time in the status bar, updated every second:
+
+import { moment, Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  statusBar: HTMLElement;
+
+  async onload() {
+    this.statusBar = this.addStatusBarItem();
+
+    this.updateStatusBar();
+
+    this.registerInterval(
+      window.setInterval(() => this.updateStatusBar(), 1000)
+    );
+  }
+
+  updateStatusBar() {
+    this.statusBar.setText(moment().format("H:mm:ss"));
+  }
+}
+
+Date and time
+
+Moment is a popular JavaScript library for working with dates and time. Obsidian uses Moment internally, so you don't need to install it yourself. You can import it from the Obsidian API instead:
+
+import { moment } from "obsidian";
+
+Links to this page
+Context menus
+
+Vault
+
+Each collection of notes in Obsidian is known as a Vault. A Vault consists of a folder, and any sub-folders within it.
+
+While your plugin can access the file system like any other Node.js application, the Vault module aims to make it easier to work with files and folders within a Vault.
+
+The following example recursively prints the paths of all Markdown files in a Vault:
+
+const files = this.app.vault.getMarkdownFiles()
+
+for (let i = 0; i < files.length; i++) {
+  console.log(files[i].path);
+}
+
+Tip
+
+If you want to list all files, and not just Markdown documents, use getFiles() instead.
+Read files
+
+There are two methods for reading the content of a file: read() and cachedRead().
+
+    If you only want to display the content to the user, then use cachedRead() to avoid reading the file from disk multiple times.
+    If you want to read the content, change it, and then write it back to disk, then use read() to avoid potentially overwriting the file with a stale copy.
+
+Info
+
+The only difference between cachedRead() and read() is when the file was modified outside of Obsidian just before the plugin reads it. As soon as the file system notifies Obsidian that the file has changed from the outside, cachedRead() behaves exactly like read(). Similarly, if you save the file within Obsidian, the read cache is flushed as well.
+
+The following example reads the content of all Markdown files in the Vault and returns the average document size:
+
+import { Notice, Plugin } from "obsidian";
+
+export default class ExamplePlugin extends Plugin {
+  async onload() {
+    this.addRibbonIcon("info", "Calculate average file length", async () => {
+      const fileLength = await this.averageFileLength();
+      new Notice(`The average file length is ${fileLength} characters.`);
+    });
+  }
+
+  async averageFileLength(): Promise<number> {
+    const { vault } = this.app;
+
+    const fileContents: string[] = await Promise.all(
+      vault.getMarkdownFiles().map((file) => vault.cachedRead(file))
+    );
+
+    let totalLength = 0;
+    fileContents.forEach((content) => {
+      totalLength += content.length;
+    });
+
+    return totalLength / fileContents.length;
+  }
+}
+
+Modify files
+
+To write text content to an existing file, use Vault.modify().
+
+function writeCurrentDate(vault: Vault, file: TFile): Promise<void> {
+  return vault.modify(file, `Today is ${new Intl.DateTimeFormat().format(new Date())}.`);
+}
+
+If you want to modify a file based on its current content, use Vault.process() instead. The second argument is a callback that provides the current file content and returns the modified content.
+
+// emojify replaces all occurrences of :) with 🙂.
+function emojify(vault: Vault, file: TFile): Promise<string> {
+  return vault.process(file, (data) => {
+    return data.replace(":)", "🙂");
+  })
+}
+
+Vault.process() is an abstraction on top of Vault.read() and Vault.modify() that guarantees that the file doesn't change between reading the current content and writing the updated content. Always prefer Vault.process() over Vault.read()/Vault.modify() to avoid unintentional loss of data.
+Asynchronous modifications
+
+Vault.process() only supports synchronous modifications. If you need to modify a file asynchronously:
+
+    Read the file using Vault.cachedRead().
+    Perform the async operations.
+    Update the file using Vault.process().
+
+Remember to check that the data in the process() callback is the same as the data returned by cachedRead(). If they aren't the same, that means that the file was changed by a different process, and you may want to ask the user for confirmation, or try again.
+Delete files
+
+There are two methods to delete a file, delete(), and trash(). Which one you should use depends on if you want to allow the user to change their mind.
+
+    delete() removes the file without a trace.
+    trash() moves the file to the trash bin.
+
+When you use trash(), you have the option to move the file to the system's trash bin, or to a local .trash folder at the root of the user's Vault.
+Is it a file or folder?
+
+Some operations return or accept a TAbstractFile object, which can be either a file or a folder. Always check the concrete type of a TAbstractFile before you use it.
+
+const folderOrFile = this.app.vault.getAbstractFileByPath("folderOrFile");
+
+if (folderOrFile instanceof TFile) {
+  console.log("It's a file!");
+} else if (folderOrFile instanceof TFolder) {
+  console.log("It's a folder!");
+}
+
+Manifest
+
+This page describe the schema for the manifest, manifest.json.
+Properties
+
+The following properties are available for both plugins and themes.
+Property 	Type 	Required 	Description
+author 	string 	Yes 	The author's name.
+minAppVersion 	string 	Yes 	The minimum required Obsidian version.
+name 	string 	Yes 	The display name.
+version 	string 	Yes 	The version, using Semantic Versioning.
+authorUrl 	string 	No 	A URL to the author's website.
+fundingUrl 	string or object 	No 	A URL or multiple URLs to where the users can support your project financially.
+Plugin-specific properties
+
+The following properties are only available to plugins.
+Property 	Type 	Required 	Description
+description 	string 	Yes 	A description of your plugin.
+id 	string 	Yes 	The ID of your plugin.
+isDesktopOnly 	boolean 	Yes 	Whether your plugin uses NodeJS or Electron APIs.
+fundingUrl
+
+fundingUrl can either be a string with a single URL, or an object with multiple URLs.
+
+Single URL:
+
+{
+  "fundingUrl": "https://buymeacoffee.com"
+}
+
+Multiple URLs:
+
+{
+  "fundingUrl": {
+    "Buy Me a Coffee": "https://buymeacoffee.com",
+    "GitHub Sponsor": "https://github.com/sponsors",
+    "Patreon": "https://www.patreon.com/"
+  }
+}
+
+Links to this page
+Mobile development
+Submission requirements for plugins
+Submit your plugin
+Submit your theme
+Versions
+
+
+Versions
+
+Every new version of Obsidian may introduce new capabilities for plugins. Unfortunately, using a recently introduced plugin capability in your plugin may break installations for users that haven't yet updated to the latest version of Obsidian. To avoid this, versions.json lets you control the plugin version based on the version of the user's Obsidian app.
+
+versions.json contains a JSON object, where the key is the plugin version, and the value is the corresponding minAppVersion.
+
+If a user attempts to install a plugin where the Obsidian app version is lower than the minAppVersion in Manifest, then Obsidian looks for a versions.json file at the root of the plugin repository.
+
+In the following example, the user has Obsidian 1.1.0 installed, but the plugin minAppVersion is 1.2.0.
+
+manifest.json:
+
+{
+  // ...
+
+  "version": "1.0.0",
+  "minAppVersion": "1.2.0"
+}
+
+If the user runs version 1.1.0 of the Obsidian app, Obsidian then consults the versions.json to determine whether a fallback is available.
+
+versions.json:
+
+{
+  "0.1.0": "1.0.0",
+  "0.12.0": "1.1.0",
+}
+
+In this case, the most recent plugin version for 1.1.0 is 0.12.0.
+Important
+
+You don't need to list every plugin relese in the versions.json. You only need to update versions.json if you change the minAppVersion for your plugin.
+
+
+

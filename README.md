@@ -1,96 +1,78 @@
-# Obsidian Sample Plugin
+# Tag Flow for Obsidian 
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-yellow.svg)]( https://www.buymeacoffee.com/YourLink )
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+> :warning: **Beta Version**: This plugin is currently in beta. While it is functional and has been tested to work well, please be aware that some features are still under development and may not be fully stable.
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Table of Contents
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- [Overview](#overview)
+- [Features](#features)
+- [Demo](#demo)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Known Issues](#known-issues)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
-## First time developing plugins?
+## Overview
 
-Quick starting guide for new plugin devs:
+Streamline the generation and administration of note lists based on specific tags within Obsidian.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+## Features
 
-## Releasing new releases
+- **Tag Selection Modal**: Displays all available tags in the vault. Selecting a tag triggers list creation.
+- **List Creation**: Creates a list of notes tagged with the selected tag. Inserts list at the cursor's location in the active note.
+- **List Updating**: Automatically updates lists based on triggers like active leaf changes, file saves, and Obsidian's open and close.
+- **Data Persistence**: Maintains state between Obsidian sessions.
+- **List Deletion**: Allows users to delete a list via a dedicated function or manually.
+- **File Change Handling**: Updates all tags and lists upon file changes.
+- **Front Matter Support**: Support for YAML front matter tags.
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+## Demo
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+![Demo](https://user-images.githubusercontent.com/45160819/263471872-5346c595-ea93-446a-bc09-565237b24646.gif)
 
-## Adding your plugin to the community plugin list
+## Installation
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+### Manual Installation
 
-## How to use
+1. Download the zip file called `Tag Flow Beta`.
+2. Unzip the folder.
+3. Move the folder to `Your Obsidian Vault > .obsidian > Plugin`.
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+> **Note**: If you can't find the `.obsidian` folder, it's likely hidden.
+**Mac:** Open Finder > Press Command + Shift + . (dot)
+**Windows:** Open File Explorer > Click on 'View' tab > Check 'Hidden items' in the Show/hide section
 
-## Manually installing the plugin
+## Usage
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+To create a new tag-based list, open the "Tag Flow: Open Tag Flow" modal via Obsidian's command palette, and then choose a tag from which to create a list. The list will be created at the mouse location.
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+## Known Issues
 
-## Funding URL
+- Lists initiated at the beginning of a note don't refresh properly.
+- Unexpected tags may appear within the list on Mac systems.
 
-You can include funding URLs where people who use your plugin can financially support it.
+## Roadmap
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+The following are features we plan to implement in upcoming versions. Your feedback and contributions are welcome!
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+- **Adding All Tags List:** Create a list of all tags.
+- **Adding Nested Tags:** Support tags in the format `{{nameOfNote/NameOfNote}}`, allowing nested categorization.
+- **Inline Tag Headers:** Provide the ability to link inline tags to their headers.
+- **Integration with Templates:** Ensure the plugin works with Obsidian's templates.
+- **Anchor Support:** Enable linking to a specific tag within a document, navigating to the exact location.
+- **User-Selectable List Types:** Allow users to choose different types of tag lists (Simple List, Expanded List, Front Matter Only, Simple Inline, Expanded Inline).
 
-If you have multiple URLs, you can also do:
+## Contributing
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+If you find this plugin useful and have ideas or spot a bug, you can always open an issue on my GitHub. You can also support by [Buy me a coffee](https://www.buymeacoffee.com/taialt)
+If you want to support the development of this plugin even more and help improve it on your own, that would be seriously awesome. Don't hesitate to jump in!
 
-## API Documentation
+## License
 
-See https://github.com/obsidianmd/obsidian-api
+MIT License - see the [LICENSE.md](https://github.com/Taialt97/Tag-Flow/blob/master/LICENSE) file for details
