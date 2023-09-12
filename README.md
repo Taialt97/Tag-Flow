@@ -54,7 +54,7 @@ To create a new tag-based list, open the "Tag Flow: Open Tag Flow" modal via Obs
 
 ## Known Issues
 
-- Lists initiated at the beginning of a note don't refresh properly.
+- Easy Typing Compatibility Issue, Lists initiated at the beginning of a note don't refresh properly
 - Unexpected tags may appear within the list on Mac systems.
 
 ## Roadmap
