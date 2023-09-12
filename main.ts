@@ -397,8 +397,6 @@ export default class TagFlowPlugin extends Plugin {
 		this.tagCache = tagMap;
 	}
 
-
-
 	async processTags(file: TFile) {
 		let frontmatterTagsArr: string[] | undefined = undefined;
 		let combinedTags: Set<string> = new Set();
@@ -412,7 +410,7 @@ export default class TagFlowPlugin extends Plugin {
 	
 			if (fmMatch && cleanedContent.startsWith(fmMatch[0])) {
 				const frontMatterString = fmMatch[1];
-				const frontMatter: any = loadYAML(frontMatterString);
+				const frontMatter = loadYAML(frontMatterString) as {tags: string | unknown};
 				
 				// Check if frontMatter.tags is a string before calling split()
 				if (typeof frontMatter.tags === 'string') {
@@ -439,9 +437,6 @@ export default class TagFlowPlugin extends Plugin {
 	
 		return combinedTags;
 	}
-	
-
-
 
 	onunload() {
 		console.log("unloading plugin");
