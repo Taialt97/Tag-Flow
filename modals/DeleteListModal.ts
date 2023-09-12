@@ -11,11 +11,10 @@ export default class DeleteListModal extends FuzzySuggestModal<TagList> {
 
 	getItems(): TagList[] {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		return activeView
-			? this.plugin.lists.filter(
-					(list) => list.notePath === activeView.file.path
-			  )
-			: [];
+		if (activeView && activeView.file) {
+			return this.plugin.lists.filter(list => list.notePath === activeView.file?.path);
+		}
+		return [];
 	}
 
 	getItemText(item: TagList): string {

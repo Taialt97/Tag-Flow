@@ -212,7 +212,7 @@ export default class TagFlowPlugin extends Plugin {
 
 	async handleTagSelection(tag: string) {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (activeView) {
+		if (activeView && activeView.file) {
 			const activeEditor = activeView.editor;
 			const cursor = activeEditor.getCursor();
 			const id = Date.now();
@@ -307,52 +307,56 @@ export default class TagFlowPlugin extends Plugin {
 		}
 		const file = activeLeaf.file;
 
-		// filtering out those tag-lists from this.lists that are only present in the currently opened file
-		const extractedLists = this.lists.filter(
-			(list) => list.notePath === file.path
-		);
+		if (file) {
 
-		for (const list of extractedLists) {
-			// Use the tag cache to find the files that contain the tag from tag list
-			const filesWithTag = markdownFiles.filter((file) => {
-				const tags = this.tagCache.get(file.path);
-				return tags && tags.has(list.tag);
-			});
-
-			const links = filesWithTag
-				.map((file) => `- [[${file.basename}]]`)
-				.join("\n");
-
-			// * Read the contents of the currently opened file
-			const content = await this.app.vault.read(file);
-			// * Get the anchor tags & the index for the currently iterated list
-			const startAnchor = `<!--tag-list ${list.tag} ${list.id}-->`;
-			const endAnchor = `<!--end-tag-list ${list.tag} ${list.id}-->`;
-			const startIndex = content.indexOf(startAnchor);
-			const endIndex = content.indexOf(endAnchor);
-
-			// * Check if the links are same as the links between anchor tags
-			const existingHyperlinks = this.alreadyExistingHyperlinks(
-				startIndex,
-				endIndex,
-				content,
-				startAnchor,
-				links
-			);
-			if (existingHyperlinks) {
-				continue;
-			}
-			await this.replaceAnchorContents(
-				startIndex,
-				endIndex,
-				content,
-				startAnchor,
-				endAnchor,
-				links,
-				file,
-				list
-			);
-		}
+			
+			// filtering out those tag-lists from this.lists that are only present in the currently opened file
+			const extractedLists = this.lists.filter(
+				(list) => file && list.notePath === file.path
+				);
+				
+				for (const list of extractedLists) {
+					// Use the tag cache to find the files that contain the tag from tag list
+					const filesWithTag = markdownFiles.filter((file) => {
+						const tags = this.tagCache.get(file.path);
+						return tags && tags.has(list.tag);
+					});
+					
+					const links = filesWithTag
+					.map((file) => `- [[${file.basename}]]`)
+					.join("\n");
+					
+					// * Read the contents of the currently opened file
+					const content = await this.app.vault.read(file);
+					// * Get the anchor tags & the index for the currently iterated list
+					const startAnchor = `<!--tag-list ${list.tag} ${list.id}-->`;
+					const endAnchor = `<!--end-tag-list ${list.tag} ${list.id}-->`;
+					const startIndex = content.indexOf(startAnchor);
+					const endIndex = content.indexOf(endAnchor);
+					
+					// * Check if the links are same as the links between anchor tags
+					const existingHyperlinks = this.alreadyExistingHyperlinks(
+						startIndex,
+						endIndex,
+						content,
+						startAnchor,
+						links
+						);
+						if (existingHyperlinks) {
+							continue;
+						}
+						await this.replaceAnchorContents(
+							startIndex,
+							endIndex,
+							content,
+							startAnchor,
+							endAnchor,
+							links,
+							file,
+							list
+							);
+						}
+					}
 	}
 
 	async saveData() {
@@ -397,8 +401,6 @@ export default class TagFlowPlugin extends Plugin {
 		this.tagCache = tagMap;
 	}
 
-
-
 	async processTags(file: TFile) {
 		let frontmatterTagsArr: string[] | undefined = undefined;
 		let combinedTags: Set<string> = new Set();
@@ -412,7 +414,7 @@ export default class TagFlowPlugin extends Plugin {
 	
 			if (fmMatch && cleanedContent.startsWith(fmMatch[0])) {
 				const frontMatterString = fmMatch[1];
-				const frontMatter: any = loadYAML(frontMatterString);
+				const frontMatter = loadYAML(frontMatterString) as {tags: string | unknown};
 				
 				// Check if frontMatter.tags is a string before calling split()
 				if (typeof frontMatter.tags === 'string') {
@@ -439,9 +441,6 @@ export default class TagFlowPlugin extends Plugin {
 	
 		return combinedTags;
 	}
-	
-
-
 
 	onunload() {
 		console.log("unloading plugin");
