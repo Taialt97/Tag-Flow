@@ -4,7 +4,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)
 
-> :warning: **Beta Version**: This plugin is currently in beta. While it is functional and has been tested to work well, please be aware that some features are still under development and may not be fully stable.
+> :warning: **Beta Version**: This plugin is currently in beta. While it is functional and has been tested to work well, please be aware that some features are still under development and may not be fully stable. If you encounter any bugs, please open a new issue on the GitHub repository.
 
 ## Table of Contents
 
@@ -54,19 +54,17 @@ To create a new tag-based list, open the "Tag Flow: Open Tag Flow" modal via Obs
 
 ## Known Issues
 
-- Lists initiated at the beginning of a note don't refresh properly.
+- Easy Typing Compatibility Issue, Lists initiated at the beginning of a note don't refresh properly
 - Unexpected tags may appear within the list on Mac systems.
 
 ## Roadmap
 
 The following are features we plan to implement in upcoming versions. Your feedback and contributions are welcome!
 
-- **Adding All Tags List:** Create a list of all tags.
-- **Adding Nested Tags:** Support tags in the format `{{nameOfNote/NameOfNote}}`, allowing nested categorization.
-- **Inline Tag Headers:** Provide the ability to link inline tags to their headers.
-- **Integration with Templates:** Ensure the plugin works with Obsidian's templates.
-- **Anchor Support:** Enable linking to a specific tag within a document, navigating to the exact location.
-- **User-Selectable List Types:** Allow users to choose different types of tag lists (Simple List, Expanded List, Front Matter Only, Simple Inline, Expanded Inline).
+- Adding Inline Only List
+- Adding Front Matter Only List
+- Integration with Templates
+- Integration with Easy Typing
 
 ## Contributing
 
