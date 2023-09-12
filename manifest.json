@@ -1,7 +1,7 @@
 {
 	"id": "tag-flow",
 	"name": "Tag Flow",
-	"version": "1.0.1",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "TagFlow auto-updates note lists based on tags, streamlining your Obsidian knowledge management experience.",
 	"author": "Tai Alt",
