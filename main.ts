@@ -168,6 +168,7 @@ export default class TagFlowPlugin extends Plugin {
 		}
 		const startAnchor = `<!--tag-list ${list.tag} ${list.id}-->`;
 		const endAnchor = `<!--end-tag-list ${list.tag} ${list.id}-->`;
+
 		const startIndex = content.indexOf(startAnchor);
 		const endIndex = content.indexOf(endAnchor);
 		if (startIndex >= 0) {
@@ -402,6 +403,7 @@ export default class TagFlowPlugin extends Plugin {
 	}
 
 	async processTags(file: TFile) {
+
 		let frontmatterTagsArr: string[] | undefined = undefined;
 		let combinedTags: Set<string> = new Set();
 	
@@ -416,15 +418,23 @@ export default class TagFlowPlugin extends Plugin {
 				const frontMatterString = fmMatch[1];
 				const frontMatter = loadYAML(frontMatterString) as {tags: string | unknown};
 				
-				// Check if frontMatter.tags is a string before calling split()
-				if (typeof frontMatter.tags === 'string') {
+				if (typeof frontMatter.tags === "string") {
+					// console.log("Processing tags as a string.");
+					// Existing code for string format
 					frontmatterTagsArr = frontMatter.tags
 						.split(',')
 						.map((tag: string) => tag.trim())
 						.filter((tag: string) => tag !== "")
 						.map((tag: string) => "#" + tag);
+				} else if (Array.isArray(frontMatter.tags)) {
+					// console.log("Processing tags as an array.");
+					// New code to handle array format
+					frontmatterTagsArr = frontMatter.tags
+						.map((tag: any) => tag.toString().trim())  // Convert to string and trim
+						.filter((tag: string) => tag !== "")  // Remove empty strings
+						.map((tag: string) => "#" + tag);  // Add '#' prefix
 				} else {
-					console.warn("frontMatter.tags is not a string. Skipping tag processing for front matter.");
+					console.warn("No tags found in frontMatter. frontMatter.tags is neither a string nor an array. Skipping tag processing for front matter.");
 				}
 			}
 	
