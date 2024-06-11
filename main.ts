@@ -15,6 +15,7 @@ export default class TagFlowPlugin extends Plugin {
 	tagCache = new Map<string, Set<string>>();
 	hasSelectedTag = false;
 	tagChanged = false;
+	public tempTitle: string = ''; // Property to hold the title
 
 	async onload() {
 		console.log("Plugin loaded");
@@ -24,10 +25,24 @@ export default class TagFlowPlugin extends Plugin {
 		// });
 
 		this.addCommand({
+			id: "create-list-from-title-command",  // This is the ID you will reference in Templater
+			name: "Create List from Title",
+			callback: () => {
+				const title = this.tempTitle;  // Ensure this is set somewhere relevant in your plugin
+				if (title) {
+					this.createListFromTitle(title);
+				} else {
+					console.error("No title set for creating list.");
+				}
+			}
+		});
+
+		this.addCommand({
 			id: "delete-current-list",
 			name: "Delete Current List",
 			callback: () => new DeleteListModal(this.app, this).open(),
 		});
+
 		this.addCommand({
 			id: "open-tag-flow",
 			name: "Open Tag Flow",
@@ -117,7 +132,14 @@ export default class TagFlowPlugin extends Plugin {
 		setInterval(() => {
 			this.updateLists();
 		}, 60 * 60 * 1000);
+
 	}
+
+	public async createListFromTitle(title: string){
+		console.log("Opening Tag Flow with title: " + title); // Consider reducing debug logs in production
+		this.handleTagSelection(title)
+	}
+
 
 	hasTagChanged(file: TFile, newTags: Set<string>) {
 		let tagChanged = false;
@@ -204,12 +226,17 @@ export default class TagFlowPlugin extends Plugin {
 		return Array.from(allTags);
 	}
 
+
 	createTagList() {
-		this.allTags = this.fetchAllTags();
-		if (this.allTags.length > 0) {
-			new TagSuggester(this.app, this, this.allTags).open();
+		this.allTags = this.fetchAllTags(); // Retrieve all tags, consider caching if performance is an issue
+		 if (this.allTags.length > 0) {
+			console.log("No tag provided, opening tag selector.");
+			new TagSuggester(this.app, this, this.allTags).open(); // Open tag suggester if no tag is provided
+		} else {
+			console.log("No tags available to select."); // Handle case where no tags are available
 		}
 	}
+	
 
 	async handleTagSelection(tag: string) {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
